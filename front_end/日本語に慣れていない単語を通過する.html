@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>日语单词朗读</title>
     <style>
-		.pre-line {
+        .pre-line {
             white-space: pre-line;
             background-color: #f0c0d0;
         }
@@ -79,105 +79,129 @@
         #pauseButton:hover {
             background-color: #c0392b;
         }
+        /* 进度条样式 */
+        #progressContainer {
+            width: 80%;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin-top:20px; /* 顶部外边距 20px */
+            height: 20px;
+            position: relative;
+        }
+
+        #progressBar {
+            height: 100%;
+            width: 0%;
+            background-color: #4caf50;
+            border-radius: 5px;
+            transition: width 0.5s ease-in-out; /* 宽度变化时添加动画过渡效果 */
+        }
     </style>
 </head>
 <body>
-    <div id="wordDisplay" class="furigana-container"></div>
-    <div id="buttons">
-        <button id="startButton">开始朗读</button>
-        <button id="pauseButton" disabled>暂停</button>
-    </div>
 
-    <script>
-        const wordDisplay = document.getElementById("wordDisplay");
-        const startButton = document.getElementById("startButton");
-        const pauseButton = document.getElementById("pauseButton");
+<div id="wordDisplay" class="furigana-container"></div>
+<div id="buttons">
+    <button id="startButton">开始朗读</button>
+    <button id="pauseButton" disabled>暂停</button>
+</div>
+<div id="progressContainer">
+    <div id="progressBar"></div>
+</div>
 
-        let isPaused = false;
-        let isStopped = false;
+<script>
+    const wordDisplay = document.getElementById("wordDisplay");
+    const startButton = document.getElementById("startButton");
+    const pauseButton = document.getElementById("pauseButton");
+    const progressBar = document.getElementById("progressBar");
 
-        // 延时功能
-        function delay(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
+    let isPaused = false;
+    let isStopped = false;
+
+    // 延时功能
+    function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // 朗读功能并返回朗读完成的Promise
+    function speakText(text) {
+        return new Promise(resolve => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = "ja-JP";
+            utterance.onend = resolve; // 朗读结束后触发resolve
+            speechSynthesis.speak(utterance);
+        });
+    }
+
+    // 暂停功能
+    async function checkPause() {
+        while (isPaused) {
+            await delay(50); // 每100毫秒检查一次暂停状态
+        }
+        if (isStopped) throw new Error('Stopped'); // 停止时抛出异常终止流程
+    }
+
+    // 通过接口获取单词数组
+    async function fetchWords() {
+        try {
+            const response = await fetch('http://127.0.0.1/test?limitQuantity=20'); // 替换为实际接口URL
+            const responseJson = await response.json();
+            console.log('responseJson',responseJson);
+            return responseJson.data;
+        } catch (error) {
+            console.error('获取单词时发生错误:', error);
+            return [];
+        }
+    }
+
+    // 主函数：按顺序朗读并显示单词
+    async function displayAndSpeakWords() {
+
+        const frequency=1;
+        startButton.style.display = "none"; // 隐藏按钮
+        pauseButton.disabled = false; // 启用暂停按钮
+
+        const words = await fetchWords();
+
+        if (words.length === 0) {
+            wordDisplay.textContent = "无法获取单词，请稍后重试。";
+            return;
         }
 
-        // 朗读功能并返回朗读完成的Promise
-        function speakText(text) {
-            return new Promise(resolve => {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = "ja-JP";
-                utterance.onend = resolve; // 朗读结束后触发resolve
-                speechSynthesis.speak(utterance);
-            });
-        }
+        let completed = 0;
+        const total = words.length;
+        try {
+            for (const word of words) {
 
-        // 暂停功能
-        async function checkPause() {
-            while (isPaused) {
-                await delay(50); // 每100毫秒检查一次暂停状态
-            }
-            if (isStopped) throw new Error('Stopped'); // 停止时抛出异常终止流程
-        }
+                wordDisplay.textContent = word.sentencesTranslate;
 
-        // 通过接口获取单词数组
-        async function fetchWords() {
-            try {
-                const response = await fetch('http://127.0.0.1/test?limitQuantity=20'); // 替换为实际接口URL
-                const responseJson = await response.json();
-				console.log('responseJson',responseJson);
-                return responseJson.data;
-            } catch (error) {
-                console.error('获取单词时发生错误:', error);
-                return [];
-            }
-        }
+                // 朗读句子
+                for (let i = 0; i < (word.sentences==='この文がありません,補足してください'?1:frequency*2); i++) {
+                    await checkPause();
+                    await speakText(word.sentences);
+                    await delay(1000); // 等待1秒
+                }
 
-        // 主函数：按顺序朗读并显示单词
-        async function displayAndSpeakWords() {
-		
-			const frequency=1;
-            startButton.style.display = "none"; // 隐藏按钮
-            pauseButton.disabled = false; // 启用暂停按钮
+                // 朗读单词
+                for (let i = 0; i < frequency; i++) {
+                    await checkPause();
+                    await speakText(word.word);
+                    await delay(1000); // 等待1秒
+                }
 
-            const words = await fetchWords();
+                // 显示平假名
+                wordDisplay.textContent = word.hiragana;
+                await delay(1000); // 等待1秒
 
-            if (words.length === 0) {
-                wordDisplay.textContent = "无法获取单词，请稍后重试。";
-                return;
-            }
+                // 显示单词后，继续朗读单词
+                for (let i = 0; i < frequency; i++) {
+                    await checkPause();
+                    await speakText(word.word);
+                    await delay(1000); // 等待1秒
+                }
 
-            try {
-                for (const word of words) {
-
-                    wordDisplay.textContent = word.sentencesTranslate;
-				
-				    // 朗读句子
-                    for (let i = 0; i < (word.sentences==='この文がありません,補足してください'?1:frequency*2); i++) {
-                        await checkPause();
-                        await speakText(word.sentences);
-                        await delay(1000); // 等待1秒
-                    }
-				
-                    // 朗读单词
-                    for (let i = 0; i < frequency; i++) {
-                        await checkPause();
-                        await speakText(word.word);
-                        await delay(1000); // 等待1秒
-                    }
-
-					// 显示平假名
-					wordDisplay.textContent = word.hiragana;
-					await delay(1000); // 等待1秒
-
-					// 显示单词后，继续朗读单词
-					for (let i = 0; i < frequency; i++) {
-						await checkPause();
-						await speakText(word.word);
-						await delay(1000); // 等待1秒
-					}
-
-					// 显示带平假名的单词
-					wordDisplay.innerHTML = `
+                // 显示带平假名的单词
+                wordDisplay.innerHTML = `
 						<ruby style="color: #6c4be3;">
 							${word.hiragana}
 							<rt>
@@ -186,66 +210,69 @@
 						</ruby>
 						<div class="pre-line" style="font-size: 20px;">${word.memoryMethods}</div>
 					`;
-                    await delay(1000); // 等待1秒
+                await delay(1000); // 等待1秒
 
-                    // 显示带平假名的单词后，继续朗读单词
-                    for (let i = 0; i < frequency*2; i++) {
-                        await checkPause();
-                        await speakText(word.word);
-                        await delay(1000); // 等待1秒
-                    }
-					
-					// 显示句子
-					wordDisplay.innerHTML = `
+                // 显示带平假名的单词后，继续朗读单词
+                for (let i = 0; i < frequency*2; i++) {
+                    await checkPause();
+                    await speakText(word.word);
+                    await delay(1000); // 等待1秒
+                }
+
+                // 显示句子
+                wordDisplay.innerHTML = `
 						<div class="pre-line" style="font-size: 20px;">${word.sentences}</div>
 					`;
-					// wordDisplay.textContent = word.sentences;
-					await delay(1000); // 等待1秒
+                // wordDisplay.textContent = word.sentences;
+                await delay(1000); // 等待1秒
 
-                    // 朗读句子
-                    for (let i = 0; i < (word.sentences==='この文がありません,補足してください'?1:frequency*2); i++) {
-                        await checkPause();
-                        await speakText(word.sentences);
-                        await delay(1000); // 等待1秒
-                    }
-
-                    // 等待3秒后继续下一个单词
-					await checkPause();
-                    await delay(3000);
-					wordDisplay.textContent = '';
+                // 朗读句子
+                for (let i = 0; i < (word.sentences==='この文がありません,補足してください'?1:frequency*2); i++) {
+                    await checkPause();
+                    await speakText(word.sentences);
+                    await delay(1000); // 等待1秒
                 }
 
-                // 所有单词处理完毕后，显示完成
-                wordDisplay.textContent = "朗读完毕";
-            } catch (e) {
-                if (e.message !== 'Stopped') {
-                    console.error(e);
-                    wordDisplay.textContent = "发生错误，请稍后重试。";
-                }
+                // 等待3秒后继续下一个单词
+                await checkPause();
+                await delay(3000);
+                wordDisplay.textContent = '';
+                completed++;
+                progressBar.style.width = `${(completed / total) * 100}%`;
             }
 
-            startButton.style.display = "inline-block";
-            pauseButton.disabled = true;
-            isStopped = false; // 重置停止状态
+            // 所有单词处理完毕后，显示完成
+            wordDisplay.textContent = "朗读完毕";
+        } catch (e) {
+            if (e.message !== 'Stopped') {
+                console.error(e);
+                wordDisplay.textContent = "发生错误，请稍后重试。";
+            }
         }
 
-        // 点击按钮开始朗读
-        startButton.addEventListener("click", () => {
-            isPaused = false;
-            isStopped = false;
-            displayAndSpeakWords();
-        });
+        startButton.style.display = "inline-block";
+        pauseButton.disabled = true;
+        isStopped = false; // 重置停止状态
+    }
 
-        // 点击按钮暂停或继续
-        pauseButton.addEventListener("click", () => {
-            if (isPaused) {
-                isPaused = false;
-                pauseButton.textContent = "暂停";
-            } else {
-                isPaused = true;
-                pauseButton.textContent = "继续";
-            }
-        });
-    </script>
+    // 点击按钮开始朗读
+    startButton.addEventListener("click", () => {
+        isPaused = false;
+        isStopped = false;
+        progressBar.style.width = "0%";
+        displayAndSpeakWords();
+    });
+
+    // 点击按钮暂停或继续
+    pauseButton.addEventListener("click", () => {
+        if (isPaused) {
+            isPaused = false;
+            pauseButton.textContent = "暂停";
+        } else {
+            isPaused = true;
+            pauseButton.textContent = "继续";
+        }
+    });
+</script>
 </body>
 </html>
