@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>日语单词学习</title>
+    <title>日本語単語学習</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -179,7 +179,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>日语单词学习</h1>
+            <h1>日本語単語学習</h1>
         </div>
         
         <div class="word-display">
@@ -191,10 +191,10 @@
 
         <div class="controls">
             <button id="startButton" class="btn btn-primary">
-                <i class="fas fa-play"></i> 开始学习
+                <i class="fas fa-play"></i> 学習開始
             </button>
             <button id="pauseButton" class="btn btn-secondary" disabled>
-                <i class="fas fa-pause"></i> 暂停
+                <i class="fas fa-pause"></i> 一時停止
             </button>
         </div>
 
@@ -202,7 +202,7 @@
             <div class="progress-bar">
                 <div class="progress-fill"></div>
             </div>
-            <div class="progress-text">进度: 0/0</div>
+            <div class="progress-text">進捗: 0/0</div>
         </div>
     </div>
 
@@ -261,14 +261,14 @@
         pauseButton.addEventListener('click', () => {
             isPaused = !isPaused;
             pauseButton.innerHTML = isPaused ? 
-                '<i class="fas fa-play"></i> 继续' : 
-                '<i class="fas fa-pause"></i> 暂停';
+                '<i class="fas fa-play"></i> 続ける' :
+                '<i class="fas fa-pause"></i> 一時停止';
         });
 
         async function displayAndSpeakWords() {
             const words = await fetchWords();
             if (words.length === 0) {
-                wordMain.textContent = "无法获取单词，请稍后重试。";
+                wordMain.textContent = "単語を取得できません、しばらくしてからもう一度お試しください。";
                 return;
             }
 
@@ -278,7 +278,7 @@
             try {
                 for (const word of words) {
                     // 显示句子翻译
-                    wordMain.textContent = word.sentencesTranslate;
+                    wordMain.textContent = '';
                     wordFurigana.textContent = '';
                     wordSentence.textContent = '';
                     wordMemory.textContent = '';
@@ -329,7 +329,7 @@
                     wordMain.textContent = '';
                     wordFurigana.textContent = '';
                     wordSentence.textContent = word.sentences;
-                    wordMemory.textContent = '';
+                    wordMemory.textContent = word.sentencesTranslate;
                     await delay(1000);
 
                     // 朗读句子
@@ -345,7 +345,7 @@
                     completed++;
                     const progress = (completed / total) * 100;
                     progressFill.style.width = `${progress}%`;
-                    progressText.textContent = `进度: ${completed}/${total}`;
+                    progressText.textContent = `進捗: ${completed}/${total}`;
                 }
 
                 wordMain.textContent = "学习完成！";
@@ -354,11 +354,11 @@
                 wordMemory.textContent = '';
                 startButton.style.display = 'block';
                 pauseButton.disabled = true;
-                pauseButton.innerHTML = '<i class="fas fa-pause"></i> 暂停';
+                pauseButton.innerHTML = '<i class="fas fa-pause"></i> 一時停止';
             } catch (e) {
                 if (e.message !== 'Stopped') {
                     console.error(e);
-                    wordMain.textContent = "发生错误，请稍后重试。";
+                    wordMain.textContent = "エラーが発生しました、しばらくしてからもう一度お試しください。";
                 }
             }
         }
