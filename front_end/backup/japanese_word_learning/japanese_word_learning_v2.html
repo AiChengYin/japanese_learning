@@ -6,6 +6,10 @@
     <title>日本語単語学習</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        .word-list, .final-list { margin-bottom: 20px; }
+        .word-item { display: flex; align-items: center; margin-bottom: 10px; }
+        .word-item input { margin-right: 10px; }
+        .controls { margin-top: 20px; }
         :root {
             --primary-color: #4a90e2;
             --secondary-color: #f39c12;
@@ -217,6 +221,8 @@
         const progressFill = document.querySelector('.progress-fill');
         const progressText = document.querySelector('.progress-text');
 
+        let words = [];
+        let selectedWords = [];
         let isPaused = false;
         let isStopped = false;
         const frequency = 1;
@@ -243,13 +249,27 @@
 
         async function fetchWords() {
             try {
-                const response = await fetch('http://127.0.0.1/test?limitQuantity=20');
+                const response = await fetch('http://127.0.0.1:12580/japaneseSentence/sentences/remember/get');
                 const responseJson = await response.json();
+                words = responseJson.data;
+                displayWordSelection();
                 return responseJson.data;
             } catch (error) {
                 console.error('获取单词时发生错误:', error);
                 return [];
             }
+        }
+
+        function displayWordSelection() {
+            const wordList = document.querySelector('.word-list');
+            wordList.innerHTML = words.map(word =>
+                `<div class='word-item'><input type='checkbox' value='${word.word}'> ${word.word}</div>`
+            ).join('');
+        }
+
+        function getSelectedWords() {
+            selectedWords = Array.from(document.querySelectorAll('.word-item input:checked'))
+                .map(input => words.find(w => w.word === input.value));
         }
 
         startButton.addEventListener('click', () => {
@@ -271,12 +291,14 @@
                 wordMain.textContent = "単語を取得できません、しばらくしてからもう一度お試しください。";
                 return;
             }
+            getSelectedWords();
+            document.querySelector('.word-list').style.display = 'none';
 
             let completed = 0;
-            const total = words.length;
+            let total = selectedWords.length;
 
             try {
-                for (const word of words) {
+                for (const word of selectedWords) {
                     // 显示句子翻译
                     wordMain.textContent = '';
                     wordFurigana.textContent = '';
