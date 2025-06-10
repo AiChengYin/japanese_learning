@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>日本語フレーズ学習</title>
+    <title>日本語聞き取れない単語</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -220,7 +220,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>日本語フレーズ学習</h1>
+        <h1>日本語聞き取れない単語</h1>
     </div>
 
     <div class="word-selection" id="wordSelection">
@@ -267,7 +267,7 @@
     let isPaused = false;
     let isStopped = false;
     const frequency = 1;
-    let allSentences = [];
+    let allWords = [];
     let selectedWords = [];
 
     function delay(ms) {
@@ -290,9 +290,9 @@
         if (isStopped) throw new Error('Stopped');
     }
 
-    async function fetchSentences() {
+    async function fetchWords() {
         try { //
-            const response = await fetch('http://127.0.0.1:12580/japaneseSentence/sentences/remember/get');
+            const response = await fetch('http://127.0.0.1:12580/japaneseWord/words/cantunderstand/get');
             const responseJson = await response.json();
             return responseJson.data;
         } catch (error) {
@@ -301,14 +301,14 @@
         }
     }
 
-    function createSentenceList(sentences) {
+    function createWordList(words) {
         wordList.innerHTML = '';
-        sentences.forEach((sentence, index) => {
+        words.forEach((word, index) => {
             const wordItem = document.createElement('div');
             wordItem.className = 'word-item';
             wordItem.innerHTML = `
                     <input type="checkbox" class="word-checkbox" id="word${index}" checked>
-                    <div class="word-text">${sentence.sentence}</div>
+                    <div class="word-text">${word.word}</div>
                 `;
             wordList.appendChild(wordItem);
         });
@@ -319,28 +319,28 @@
 
     function getSelectedSentences() {
         const checkboxes = document.querySelectorAll('.word-checkbox');
-        return allSentences.filter((_, index) => checkboxes[index].checked);
+        return allWords.filter((_, index) => checkboxes[index].checked);
     }
 
     startButton.addEventListener('click', async () => {
         if (wordList.classList.contains('show')) {
             selectedWords = getSelectedSentences();
             if (selectedWords.length === 0) {
-                alert('少なくとも1つのフレーズを選択してください。');
+                alert('少なくとも1つの単語を選択してください。');
                 return;
             }
             wordList.classList.remove('show');
             startButton.innerHTML = '<i class="fas fa-play"></i> 学習開始';
             startButton.style.display = 'none';
             pauseButton.disabled = false;
-            displayAndSpeakSentences();
+            displayAndSpeakWords();
         } else {
-            allSentences = await fetchSentences();
-            if (allSentences.length === 0) {
+            allWords = await fetchWords();
+            if (allWords.length === 0) {
                 wordMain.textContent = "文を取得できません、しばらくしてからもう一度お試しください。";
                 return;
             }
-            createSentenceList(allSentences);
+            createWordList(allWords);
             startButton.innerHTML = '<i class="fas fa-check"></i> 確認';
         }
     });
@@ -352,25 +352,23 @@
             '<i class="fas fa-pause"></i> 一時停止';
     });
 
-    async function displayAndSpeakSentences() {
+    async function displayAndSpeakWords() {
         let completed = 0;
         const total = selectedWords.length;
         const frequency=4;
 
         try {
-            for (const sentence of selectedWords) {
+            for (const word of selectedWords) {
 
-                wordMemory.textContent = sentence.sentenceTranslated;
-
-                // 朗读句子
+                // 朗读単語
                 for (let i = 0; i <frequency; i++) {
                     await checkPause();
-                    await speakText(sentence.sentence);
-                    wordMain.textContent = sentence.sentence;
-                    await delay(1000); // 等待1秒
+                    await speakText(word.word);
+                    wordMain.textContent = word.word;
+                    await delay(500); // 等待1秒
                 }
                 await checkPause();
-                await delay(1000);
+                await delay(500);
                 wordMemory.textContent = '';
                 wordMain.textContent = '';
 
@@ -382,11 +380,11 @@
 
             // 显示所有单词
             wordList.innerHTML = '';
-            allSentences.forEach(sentence => {
+            allWords.forEach(word => {
                 const wordItem = document.createElement('div');
                 wordItem.className = 'word-item';
                 wordItem.innerHTML = `
-                        <div class="word-text">${sentence.sentence}</div>
+                        <div class="word-text">${word.word}</div>
                     `;
                 wordList.appendChild(wordItem);
             });

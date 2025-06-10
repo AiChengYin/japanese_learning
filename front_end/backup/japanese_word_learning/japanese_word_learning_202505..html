@@ -339,6 +339,7 @@
                 return;
             }
             createWordList(allWords);
+            enableSentenceReveal();
             startButton.innerHTML = '<i class="fas fa-check"></i> 確認';
         }
     });
@@ -349,6 +350,23 @@
             '<i class="fas fa-play"></i> 続ける' :
             '<i class="fas fa-pause"></i> 一時停止';
     });
+
+    function enableSentenceReveal() {
+        const translatedItems = document.querySelectorAll('#wordList .word-text');
+        translatedItems.forEach((item, index) => {
+            let isRevealed = false;
+            const originalWord = allWords[index]?.word || '';
+            const translatedSentence = allWords[index]?.sentences || '';
+
+            item.style.cursor = 'pointer';
+            item.addEventListener('click', () => {
+                isRevealed = !isRevealed;
+                item.innerHTML = isRevealed
+                    ? `<span style="color: var(--primary-color); font-weight: bold;">${originalWord}</span>`
+                    : `${translatedSentence}`;
+            });
+        });
+    }
 
     async function displayAndSpeakWords() {
         let completed = 0;
@@ -438,6 +456,7 @@
                 wordList.appendChild(wordItem);
             });
             wordList.classList.add('show');
+            enableSentenceReveal();
             wordMain.textContent = "学習完了！";
             wordFurigana.textContent = '';
             wordSentence.textContent = '';
