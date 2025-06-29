@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>必要な覚える単語</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        :root {
+          --primary-color: #4a90e2;
+          --secondary-color: #f39c12;
+          --background-color: #f5f6fa;
+          --text-color: #2c3e50;
+          --success-color: #2ecc71;
+        }
+
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+          font-family: 'Helvetica Neue', Arial, sans-serif;
+          background-color: var(--background-color);
+          color: var(--text-color);
+          line-height: 1.6;
+          padding: 20px;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          width: 100%;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .header {
+          text-align: center;
+          margin-bottom: 20px;
+          padding: 15px;
+          background: white;
+          border-radius: 10px;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .word-display {
+          background: white;
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+          margin-bottom: 20px;
+          min-height: 200px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .word-main {
+          font-size: 2.5em;
+          margin-bottom: 10px;
+          text-align: center;
+        }
+
+        .word-furigana {
+          font-size: 1.2em;
+          color: var(--primary-color);
+          margin-bottom: 15px;
+        }
+
+        .word-sentence {
+          font-size: 1.1em;
+          color: var(--text-color);
+          margin-bottom: 15px;
+          text-align: center;
+        }
+
+        .word-memory {
+          font-size: 0.9em;
+          color: var(--secondary-color);
+          background: #fff3cd;
+          padding: 10px;
+          border-radius: 5px;
+          width: 100%;
+          text-align: center;
+        }
+
+        .word-selection {
+          background: white;
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+          margin-bottom: 20px;
+          max-height: 400px;
+          overflow-y: auto;
+        }
+
+        .word-item {
+          display: flex;
+          align-items: center;
+          padding: 10px;
+          border-bottom: 1px solid #eee;
+        }
+
+        .word-item:last-child {
+          border-bottom: none;
+        }
+
+        .word-checkbox {
+          margin-right: 15px;
+          width: 20px;
+          height: 20px;
+          cursor: pointer;
+        }
+
+        .word-text {
+          flex: 1;
+          font-size: 1.1em;
+        }
+
+        .controls {
+          display: flex;
+          gap: 10px;
+          justify-content: center;
+          margin-bottom: 20px;
+          flex-wrap: wrap;
+        }
+
+        .btn {
+          padding: 12px 25px;
+          border: none;
+          border-radius: 25px;
+          font-size: 1.1em;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+          background-color: var(--primary-color);
+          color: white;
+        }
+
+        .btn-secondary {
+          background-color: var(--secondary-color);
+          color: white;
+        }
+
+        .btn-danger {
+          background-color: #e74c3c;
+          color: white;
+        }
+
+        .btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .progress-container {
+          background: white;
+          padding: 15px;
+          border-radius: 10px;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+          width: 100%;
+          height: 10px;
+          background: #eee;
+          border-radius: 5px;
+          overflow: hidden;
+        }
+
+        .progress-fill {
+          height: 100%;
+          background: var(--success-color);
+          width: 0%;
+          transition: width 0.3s ease;
+        }
+
+        .progress-text {
+          text-align: center;
+          margin-top: 5px;
+          font-size: 0.9em;
+          color: var(--text-color);
+        }
+
+        .word-list {
+          display: none;
+        }
+
+        .word-list.show {
+          display: block;
+        }
+
+        .hidden {
+          display: none !important;
+        }
+
+        @media (max-width: 480px) {
+          .word-main {
+            font-size: 2em;
+          }
+
+          .word-furigana {
+            font-size: 1em;
+          }
+
+          .word-sentence {
+            font-size: 1em;
+          }
+
+          .btn {
+            padding: 10px 20px;
+            font-size: 1em;
+          }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>必要な覚える単語</h1>
+    </div>
+
+    <div class="word-selection" id="wordSelection">
+        <div class="word-list" id="wordList"></div>
+    </div>
+
+    <div class="word-display">
+        <div class="word-main"></div>
+        <div class="word-furigana"></div>
+        <div class="word-sentence"></div>
+        <div class="word-memory"></div>
+    </div>
+
+    <div class="controls">
+        <button id="startButton" class="btn btn-primary">
+            <i class="fas fa-play"></i> 学習開始
+        </button>
+        <button id="pauseButton" class="btn btn-secondary hidden" disabled>
+            <i class="fas fa-pause"></i> 一時停止
+        </button>
+        <button id="markButton" class="btn btn-danger hidden" disabled>
+            <i class="fas fa-times-circle"></i> 未掌握
+        </button>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+        <div class="progress-text">進捗: 0/0</div>
+    </div>
+</div>
+
+<script>
+    const wordMain = document.querySelector('.word-main');
+    const wordMemory = document.querySelector('.word-memory');
+    const startButton = document.getElementById('startButton');
+    const pauseButton = document.getElementById('pauseButton');
+    const markButton = document.getElementById('markButton');
+    const progressFill = document.querySelector('.progress-fill');
+    const progressText = document.querySelector('.progress-text');
+    const wordList = document.getElementById('wordList');
+
+    let isPaused = false;
+    let isStopped = false;
+    let allWords = [];
+    let selectedWords = [];
+    let currentWord = null;
+    let unmasteredWords = [];
+
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+function speakText(text) {
+    return new Promise(resolve => {
+        // 等待 voice 加载完成
+        const loadVoices = () => {
+            return new Promise(res => {
+                const voices = speechSynthesis.getVoices();
+                if (voices.length !== 0) {
+                    res(voices);
+                } else {
+                    speechSynthesis.onvoiceschanged = () => res(speechSynthesis.getVoices());
+                }
+            });
+        };
+
+        loadVoices().then(voices => {
+            const utterance = new SpeechSynthesisUtterance(text);
+
+            // 选择日语语音，优先 Google 日本語（如果存在）
+            const japaneseVoices = voices.filter(v => v.lang === 'ja-JP');
+            const preferredVoice = japaneseVoices.find(v => v.name.includes('Google')) || japaneseVoices[0];
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
+
+            // 设置自然的语速、音调、音量（可根据实际再微调）
+            utterance.rate = 0.95;   // 语速：0.9 ~ 1.0 更自然
+            utterance.pitch = 1.05;  // 音调：适度稍高更生动
+            utterance.volume = 1.0;  // 音量最大
+
+            utterance.lang = 'ja-JP';
+            utterance.onend = resolve;
+
+            // 清空队列，避免重叠播放
+            speechSynthesis.cancel();
+            speechSynthesis.speak(utterance);
+        });
+    });
+}
+
+    async function checkPause() {
+      while (isPaused) {
+        await delay(50);
+      }
+      if (isStopped) throw new Error('Stopped');
+    }
+
+    async function fetchWords() {
+      try {
+        const response = await fetch('http://127.0.0.1:12580/unfamiliarJapaneseWord/table/query');
+        const responseJson = await response.json();
+        return responseJson.data;
+      } catch (error) {
+        console.error('文を取得中にエラーが発生しました', error);
+        return [];
+      }
+    }
+	
+	async function sendMasteredWords(words) {
+	  const mastered = words
+		.filter(word => !unmasteredWords.includes(word))
+		.map(word => word.word); // 提取单词文本字符串
+
+	　const unmastered = words
+		.filter(word => unmasteredWords.includes(word))
+		.map(word => word.word); // 提取单词文本字符串
+		
+	  console.log('mastered',mastered);
+
+	  if (mastered.length === 0) return;
+
+	  try {
+		const response = await fetch('http://127.0.0.1:12580/unfamiliarJapaneseWord/modify', {
+		  method: 'POST',
+		  headers: {
+			'Content-Type': 'application/json'
+		  },
+		  body: JSON.stringify({ masteredWords: mastered,unMasteredWords: unmastered }) // 注意这里包成对象
+		});
+
+		if (!response.ok) {
+		  console.error('単語の送信に失敗しました。', await response.text());
+		} else {
+		  console.log('掌握した単語が正常に送信されました:', mastered);
+		}
+	  } catch (err) {
+		console.error('単語送信中にエラーが発生しました:', err);
+	  }
+	}
+
+
+
+    function createWordList(words) {
+      wordList.innerHTML = '';
+      words.forEach((word, index) => {
+        const wordItem = document.createElement('div');
+        wordItem.className = 'word-item';
+        wordItem.innerHTML = `
+          <input type="checkbox" class="word-checkbox" id="word${index}" checked>
+          <div class="word-text">${word.word}</div>
+        `;
+        wordList.appendChild(wordItem);
+      });
+      wordList.classList.add('show');
+    }
+
+    function getSelectedSentences() {
+      const checkboxes = document.querySelectorAll('.word-checkbox');
+      return allWords.filter((_, index) => checkboxes[index].checked);
+    }
+
+    markButton.addEventListener('click', () => {
+      if (currentWord && !unmasteredWords.includes(currentWord)) {
+        unmasteredWords.push(currentWord);
+      }
+    });
+
+    startButton.addEventListener('click', async () => {
+      if (wordList.classList.contains('show')) {
+        selectedWords = getSelectedSentences();
+        if (selectedWords.length === 0) {
+          alert('少なくとも1つの単語を選択してください。');
+          return;
+        }
+        wordList.classList.remove('show');
+        startButton.style.display = 'none';
+        pauseButton.disabled = false;
+        markButton.disabled = false;
+        pauseButton.classList.remove('hidden');
+        markButton.classList.remove('hidden');
+        displayAndSpeakWords();
+      } else {
+        allWords = await fetchWords();
+        if (allWords.length === 0) {
+          wordMain.textContent = "文を取得できません、しばらくしてからもう一度お試しください。";
+          return;
+        }
+        createWordList(allWords);
+        startButton.innerHTML = '<i class="fas fa-check"></i> 確認';
+      }
+    });
+
+    pauseButton.addEventListener('click', () => {
+      isPaused = !isPaused;
+      pauseButton.innerHTML = isPaused ?
+        '<i class="fas fa-play"></i> 続ける' :
+        '<i class="fas fa-pause"></i> 一時停止';
+    });
+
+    async function displayAndSpeakWords() {
+      let completed = 0;
+      const total = selectedWords.length;
+      const frequency = 5;
+      unmasteredWords = [];
+
+      try {
+        for (const word of selectedWords) {
+          currentWord = word;
+          for (let i = 0; i < frequency; i++) {
+            await checkPause();
+			if(i>2){
+				await speakText(word.word);
+                wordMemory.textContent = word.textContent;
+			}
+			wordMain.textContent = word.word;
+            await delay(i>2?800:600);
+          }
+          wordMemory.textContent = '';
+          wordMain.textContent = '';
+          completed++;
+          const progress = (completed / total) * 100;
+          progressFill.style.width = `${progress}%`;
+          progressText.textContent = `進捗: ${completed}/${total}`;
+        }
+
+        wordList.innerHTML = '';
+        (unmasteredWords.length > 0 ? unmasteredWords : selectedWords).forEach(word => {
+          const wordItem = document.createElement('div');
+          wordItem.className = 'word-item';
+          wordItem.innerHTML = `<div class="word-text">${word.word}</div>`;
+          wordList.appendChild(wordItem);
+        });
+        wordList.classList.add('show');
+        wordMain.textContent = "学習完了！";
+        wordMemory.textContent = '';
+        startButton.style.display = 'block';
+        pauseButton.disabled = true;
+        markButton.disabled = true;
+        pauseButton.classList.add('hidden');
+        markButton.classList.add('hidden');
+        pauseButton.innerHTML = '<i class="fas fa-pause"></i> 一時停止';
+		await sendMasteredWords(selectedWords);
+      } catch (e) {
+        if (e.message !== 'Stopped') {
+          console.error(e);
+          wordMain.textContent = "エラーが発生しました、しばらくしてからもう一度お試しください。";
+        }
+      }
+    }
+</script>
+</body>
+</html>
